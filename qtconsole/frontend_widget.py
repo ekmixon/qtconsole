@@ -40,8 +40,7 @@ class FrontendHighlighter(PygmentsHighlighter):
 
         if not line or line.isspace():
             return line
-        m = self._classic_prompt_re.match(line)
-        if m:
+        if m := self._classic_prompt_re.match(line):
             return line[len(m.group(0)):]
         else:
             return line
@@ -51,8 +50,7 @@ class FrontendHighlighter(PygmentsHighlighter):
 
         if not line or line.isspace():
             return line
-        m = self._ipy_prompt_re.match(line)
-        if m:
+        if m := self._ipy_prompt_re.match(line):
             return line[len(m.group(0)):]
         else:
             return line
@@ -170,8 +168,7 @@ class FrontendWidget(HistoryConsoleWidget, BaseFrontendMixin):
         self._highlighter = FrontendHighlighter(self, lexer=self.lexer)
         self._kernel_manager = None
         self._kernel_client = None
-        self._request_info = {}
-        self._request_info['execute'] = {}
+        self._request_info = {'execute': {}}
         self._callback_dict = {}
         self._display_banner = True
 
@@ -383,8 +380,7 @@ class FrontendWidget(HistoryConsoleWidget, BaseFrontendMixin):
     def _handle_clear_output(self, msg):
         """Handle clear output messages."""
         if self.include_output(msg):
-            wait = msg['content'].get('wait', True)
-            if wait:
+            if wait := msg['content'].get('wait', True):
                 self._pending_clearoutput = True
             else:
                 self.clear_output()
@@ -480,7 +476,7 @@ class FrontendWidget(HistoryConsoleWidget, BaseFrontendMixin):
             self._handle_exec_callback(msg)
             self._request_info['execute'].pop(msg_id)
         elif info and not self._hidden:
-            raise RuntimeError("Unknown handler for %s" % info.kind)
+            raise RuntimeError(f"Unknown handler for {info.kind}")
 
     def _handle_error(self, msg):
         """ Handle error messages.
@@ -508,9 +504,7 @@ class FrontendWidget(HistoryConsoleWidget, BaseFrontendMixin):
 
     def _kernel_restarted_message(self, died=True):
         msg = "Kernel died, restarting" if died else "Kernel restarting"
-        self._append_html("<br>%s<hr><br>" % msg,
-            before_prompt=False
-        )
+        self._append_html(f"<br>{msg}<hr><br>", before_prompt=False)
 
     def _handle_kernel_died(self, since_last_heartbeat):
         """Handle the kernel's death (if we do not own the kernel).
@@ -569,35 +563,24 @@ class FrontendWidget(HistoryConsoleWidget, BaseFrontendMixin):
             if restart:
                 # someone restarted the kernel, handle it
                 self._handle_kernel_restarted(died=False)
+            elif self._local_kernel:
+                self.exit_requested.emit(self)
             else:
-                # kernel was shutdown permanently
-                # this triggers exit_requested if the kernel was local,
-                # and a dialog if the kernel was remote,
-                # so we don't suddenly clear the qtconsole without asking.
-                if self._local_kernel:
+                title = self.window().windowTitle()
+                reply = QtWidgets.QMessageBox.question(self, title,
+                    "Kernel has been shutdown permanently. "
+                    "Close the Console?",
+                    QtWidgets.QMessageBox.Yes,QtWidgets.QMessageBox.No)
+                if reply == QtWidgets.QMessageBox.Yes:
                     self.exit_requested.emit(self)
-                else:
-                    title = self.window().windowTitle()
-                    reply = QtWidgets.QMessageBox.question(self, title,
-                        "Kernel has been shutdown permanently. "
-                        "Close the Console?",
-                        QtWidgets.QMessageBox.Yes,QtWidgets.QMessageBox.No)
-                    if reply == QtWidgets.QMessageBox.Yes:
-                        self.exit_requested.emit(self)
 
     def _handle_status(self, msg):
         """Handle status message"""
         # This is where a busy/idle indicator would be triggered,
         # when we make one.
         state = msg['content'].get('execution_state', '')
-        if state == 'starting':
-            # kernel started while we were running
-            if self._executing:
-                self._handle_kernel_restarted(died=True)
-        elif state == 'idle':
-            pass
-        elif state == 'busy':
-            pass
+        if state == 'starting' and self._executing:
+            self._handle_kernel_restarted(died=True)
 
     def _started_channels(self):
         """ Called when the KernelManager channels have started listening or
@@ -774,7 +757,7 @@ class FrontendWidget(HistoryConsoleWidget, BaseFrontendMixin):
         # all the ipython %exit magic syntax of '-k' to be used to keep
         # the kernel running
         if content['ename']=='SystemExit':
-            keepkernel = content['evalue']=='-k' or content['evalue']=='True'
+            keepkernel = content['evalue'] in ['-k', 'True']
             self._keep_kernel_on_exit = keepkernel
             self.exit_requested.emit(self)
         else:
@@ -787,8 +770,7 @@ class FrontendWidget(HistoryConsoleWidget, BaseFrontendMixin):
         payload = msg['content'].get('payload', [])
         for item in payload:
             if not self._process_execute_payload(item):
-                warning = 'Warning: received unknown payload of type %s'
-                print(warning % repr(item['source']))
+                print(f"Warning: received unknown payload of type {repr(item['source'])}")
 
     def _process_execute_payload(self, item):
         """ Process a single payload item from the list of payload items in an

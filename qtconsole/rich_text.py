@@ -78,7 +78,7 @@ class HtmlExporter(object):
                     layout = QtWidgets.QVBoxLayout(dialog)
                     msg = "Exporting HTML with PNGs"
                     info = "Would you like inline PNGs (single large html " \
-                        "file) or external image files?"
+                            "file) or external image files?"
                     checkbox = QtWidgets.QCheckBox("&Don't ask again")
                     checkbox.setShortcut('D')
                     ib = QtWidgets.QPushButton("&Inline")
@@ -143,9 +143,9 @@ def export_html(html, filename, image_tag = None, inline = True):
         path = None
     else:
         root,ext = os.path.splitext(filename)
-        path = root + "_files"
+        path = f"{root}_files"
         if os.path.isfile(path):
-            raise OSError("%s exists, but is not a directory." % path)
+            raise OSError(f"{path} exists, but is not a directory.")
 
     with io.open(filename, 'w', encoding='utf-8') as f:
         html = fix_html(html)

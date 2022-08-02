@@ -132,7 +132,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if not connection_file:
             return
         widget = self.connection_frontend_factory(connection_file)
-        name = "external {}".format(self.next_external_kernel_id)
+        name = f"external {self.next_external_kernel_id}"
         self.add_tab_with_frontend(widget, name=name)
 
     def create_tab_with_current_kernel(self):
@@ -145,7 +145,7 @@ class MainWindow(QtWidgets.QMainWindow):
             # don't keep stacking slaves
             name = current_widget_name
         else:
-            name = '(%s) slave' % current_widget_name
+            name = f'({current_widget_name}) slave'
         self.add_tab_with_frontend(widget,name=name)
 
     def set_tab_title(self):
@@ -328,10 +328,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if as_list:
             return master_widget
         assert(len(master_widget)<=1 )
-        if len(master_widget)==0:
-            return None
-
-        return master_widget[0]
+        return master_widget[0] if master_widget else None
 
     def find_slave_widgets(self,tab):
         """return all the frontends that do not own the kernel attached to the given widget/tab.
@@ -355,9 +352,11 @@ class MainWindow(QtWidgets.QMainWindow):
         # Get a list of all widget owning the same kernel and removed it from
         # the previous cadidate. (better using sets ?)
         master_widget_list = self.find_master_tab(tab, as_list=True)
-        slave_list = [widget for widget in filtered_widget_list if widget not in master_widget_list]
-
-        return slave_list
+        return [
+            widget
+            for widget in filtered_widget_list
+            if widget not in master_widget_list
+        ]
 
     # Populate the menu bar with common actions and shortcuts
     def add_menu_action(self, menu, action, defer_shortcut=False):
@@ -624,11 +623,14 @@ class MainWindow(QtWidgets.QMainWindow):
             self.syntax_style_menu = self.view_menu.addMenu("&Syntax Style")
             style_group = QtWidgets.QActionGroup(self)
             for style in available_syntax_styles:
-                action = QtWidgets.QAction("{}".format(style), self,
-                                       triggered=lambda v,
-                                       syntax_style=style:
-                                           self.set_syntax_style(
-                                                   syntax_style=syntax_style))
+                action = QtWidgets.QAction(
+                    f"{style}",
+                    self,
+                    triggered=lambda v, syntax_style=style: self.set_syntax_style(
+                        syntax_style=syntax_style
+                    ),
+                )
+
                 action.setCheckable(True)
                 style_group.addAction(action)
                 self.syntax_style_menu.addAction(action)
@@ -644,18 +646,22 @@ class MainWindow(QtWidgets.QMainWindow):
 
         ctrl = "Meta" if sys.platform == 'darwin' else "Ctrl"
 
-        self.interrupt_kernel_action = QtWidgets.QAction("&Interrupt current Kernel",
+        self.interrupt_kernel_action = QtWidgets.QAction(
+            "&Interrupt current Kernel",
             self,
             triggered=self.interrupt_kernel_active_frontend,
-            shortcut=ctrl+"+C",
-            )
+            shortcut=f"{ctrl}+C",
+        )
+
         self.add_menu_action(self.kernel_menu, self.interrupt_kernel_action)
 
-        self.restart_kernel_action = QtWidgets.QAction("&Restart current Kernel",
+        self.restart_kernel_action = QtWidgets.QAction(
+            "&Restart current Kernel",
             self,
             triggered=self.restart_kernel_active_frontend,
-            shortcut=ctrl+"+.",
-            )
+            shortcut=f"{ctrl}+.",
+        )
+
         self.add_menu_action(self.kernel_menu, self.restart_kernel_action)
 
         self.kernel_menu.addSeparator()
@@ -916,7 +922,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if reply == cancel:
             event.ignore()
             return
-        if reply == okay or reply == accept_role:
+        if reply in [okay, accept_role]:
             while self.tab_widget.count() >= 1:
                 # prevent further confirmations:
                 widget = self.active_frontend

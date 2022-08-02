@@ -78,7 +78,7 @@ def test_scroll(qtconsole, qtbot, debug):
         qtbot.keyClick(control, QtCore.Qt.Key_Enter)
         # redefine run_line
         def run_line(line, block=True):
-            qtbot.keyClicks(control, '!' + line)
+            qtbot.keyClicks(control, f'!{line}')
             qtbot.keyClick(control, QtCore.Qt.Key_Enter,
                            modifier=QtCore.Qt.ShiftModifier)
             if block:
@@ -153,7 +153,7 @@ def test_input(qtconsole, qtbot):
         shell.execute("import time")
 
     input_function = 'input'
-    shell.execute("print(" + input_function + "('name: ')); time.sleep(3)")
+    shell.execute(f"print({input_function}" + "('name: ')); time.sleep(3)")
 
     qtbot.waitUntil(lambda: control.toPlainText().split()[-1] == 'name:')
 
@@ -161,7 +161,7 @@ def test_input(qtconsole, qtbot):
     qtbot.keyClick(control, QtCore.Qt.Key_Enter)
     qtbot.waitUntil(lambda: not shell._reading)
     qtbot.keyClick(control, 'z', modifier=QtCore.Qt.ControlModifier)
-    for i in range(10):
+    for _ in range(10):
         qtbot.keyClick(control, QtCore.Qt.Key_Backspace)
     qtbot.waitUntil(lambda: shell._prompt_html is not None,
                     timeout=SHELL_TIMEOUT)

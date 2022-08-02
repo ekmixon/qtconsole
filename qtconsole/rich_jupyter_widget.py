@@ -86,8 +86,7 @@ class RichJupyterWidget(RichIPythonWidget):
         """ Reimplemented to return a custom context menu for images.
         """
         format = self._control.cursorForPosition(pos).charFormat()
-        name = format.stringProperty(QtGui.QTextFormat.ImageName)
-        if name:
+        if name := format.stringProperty(QtGui.QTextFormat.ImageName):
             menu = QtWidgets.QMenu(self)
 
             menu.addAction('Copy Image', lambda: self._copy_image(name))
@@ -194,7 +193,7 @@ class RichJupyterWidget(RichIPythonWidget):
         basic_envs = ['math', 'displaymath']
         starable_envs = ['equation', 'eqnarray' 'multline', 'gather', 'align',
                          'flalign', 'alignat']
-        star_envs = [env + '*' for env in starable_envs]
+        star_envs = [f'{env}*' for env in starable_envs]
         envs = basic_envs + starable_envs + star_envs
 
         env_syntax = [r'\begin{{{0}}} \end{{{0}}}'.format(env).split() for env in envs]
@@ -269,9 +268,9 @@ class RichJupyterWidget(RichIPythonWidget):
         """ Returns the QImage stored as the ImageResource with 'name'.
         """
         document = self._control.document()
-        image = document.resource(QtGui.QTextDocument.ImageResource,
-                                  QtCore.QUrl(name))
-        return image
+        return document.resource(
+            QtGui.QTextDocument.ImageResource, QtCore.QUrl(name)
+        )
 
     def _get_image_tag(self, match, path = None, format = "png"):
         """ Return (X)HTML mark-up for the image-tag given by match.
@@ -299,8 +298,9 @@ class RichJupyterWidget(RichIPythonWidget):
             if path is not None:
                 ensure_dir_exists(path)
                 relpath = os.path.basename(path)
-                if image.save("%s/qt_img%s.%s" % (path, match.group("name"), format),
-                              "PNG"):
+                if image.save(
+                    f'{path}/qt_img{match.group("name")}.{format}', "PNG"
+                ):
                     return '<img src="%s/qt_img%s.%s">' % (relpath,
                                                             match.group("name"),format)
                 else:
@@ -369,12 +369,12 @@ class RichJupyterWidget(RichIPythonWidget):
                 image = image.scaled(width, height,
                                      QtCore.Qt.IgnoreAspectRatio,
                                      QtCore.Qt.SmoothTransformation)
-            elif width and not height:
+            elif width:
                 image = image.scaledToWidth(width, QtCore.Qt.SmoothTransformation)
-            elif height and not width:
+            elif height:
                 image = image.scaledToHeight(height, QtCore.Qt.SmoothTransformation)
         except ValueError:
-            self._insert_plain_text(cursor, 'Received invalid %s data.'%fmt)
+            self._insert_plain_text(cursor, f'Received invalid {fmt} data.')
         else:
             format = self._add_image(image)
             cursor.insertBlock()
@@ -401,7 +401,7 @@ class RichJupyterWidget(RichIPythonWidget):
         dialog = QtWidgets.QFileDialog(self._control, 'Save Image')
         dialog.setAcceptMode(QtWidgets.QFileDialog.AcceptSave)
         dialog.setDefaultSuffix(format.lower())
-        dialog.setNameFilter('%s file (*.%s)' % (format, format.lower()))
+        dialog.setNameFilter(f'{format} file (*.{format.lower()})')
         if dialog.exec_():
             filename = dialog.selectedFiles()[0]
             image = self._get_image(name)

@@ -45,8 +45,7 @@ def sh2(cmd):
     Stderr is unbuffered from the subshell.x"""
     p = Popen(cmd, stdout=PIPE, shell=True)
     out = p.communicate()[0]
-    retcode = p.returncode
-    if retcode:
+    if retcode := p.returncode:
         raise CalledProcessError(retcode, cmd)
     else:
         return out.rstrip()
@@ -58,8 +57,7 @@ def sh3(cmd):
     If anything appears in stderr, print it out to sys.stderr"""
     p = Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True)
     out, err = p.communicate()
-    retcode = p.returncode
-    if retcode:
+    if retcode := p.returncode:
         raise CalledProcessError(retcode, cmd)
     else:
         return out.rstrip(), err.rstrip()
@@ -67,7 +65,7 @@ def sh3(cmd):
 
 def init_repo(path):
     """clone the gh-pages repo if we haven't already."""
-    sh("git clone %s %s"%(pages_repo, path))
+    sh(f"git clone {pages_repo} {path}")
     here = os.getcwd()
     cd(path)
     sh('git checkout gh-pages')
@@ -82,7 +80,7 @@ if __name__ == '__main__':
         tag = sys.argv[1]
     except IndexError:
         tag = "dev"
-    
+
     startdir = os.getcwd()
     if not os.path.exists(pages_dir):
         # init the repo
@@ -96,21 +94,10 @@ if __name__ == '__main__':
 
     dest = pjoin(pages_dir, tag)
 
-    # don't `make html` here, because gh-pages already depends on html in Makefile
-    # sh('make html')
-    if tag != 'dev':
-        # only build pdf for non-dev targets
-        #sh2('make pdf')
-        pass
-
     # This is pretty unforgiving: we unconditionally nuke the destination
     # directory, and then copy the html tree in there
     shutil.rmtree(dest, ignore_errors=True)
     shutil.copytree(html_dir, dest)
-    if tag != 'dev':
-        #shutil.copy(pjoin(pdf_dir, 'ipython.pdf'), pjoin(dest, 'ipython.pdf'))
-        pass
-
     try:
         cd(pages_dir)
         branch = sh2('git rev-parse --abbrev-ref HEAD').strip().decode('ascii', 'replace')
@@ -119,13 +106,13 @@ if __name__ == '__main__':
                                                                  branch)
             raise RuntimeError(e)
 
-        sh('git add -A %s' % tag)
+        sh(f'git add -A {tag}')
         sh('git commit -m"Updated doc release: %s"' % tag)
         print()
         print('Most recent 3 commits:')
         sys.stdout.flush()
-        # Need 3 commits in the repo before this will work
-        #sh('git --no-pager log --oneline HEAD~3..')
+            # Need 3 commits in the repo before this will work
+            #sh('git --no-pager log --oneline HEAD~3..')
     finally:
         cd(startdir)
 

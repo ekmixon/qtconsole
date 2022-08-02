@@ -95,16 +95,18 @@ qt_flags = {
     'plain' : ({'JupyterQtConsoleApp' : {'plain' : True}},
             "Disable rich text support."),
 }
-qt_flags.update(boolean_flag(
-    'banner', 'JupyterQtConsoleApp.display_banner',
+qt_flags |= boolean_flag(
+    'banner',
+    'JupyterQtConsoleApp.display_banner',
     "Display a banner upon starting the QtConsole.",
-    "Don't display a banner upon starting the QtConsole."
-))
+    "Don't display a banner upon starting the QtConsole.",
+)
+
 
 # and app_flags from the Console Mixin
 qt_flags.update(app_flags)
 # add frontend flags to the full set
-flags.update(qt_flags)
+flags |= qt_flags
 
 # start with copy of base jupyter aliases
 aliases = dict(base_aliases)
@@ -116,10 +118,10 @@ qt_aliases = dict(
     paging = 'ConsoleWidget.paging',
 )
 # and app_aliases from the Console Mixin
-qt_aliases.update(app_aliases)
-qt_aliases.update({'gui-completion':'ConsoleWidget.gui_completion'})
+qt_aliases |= app_aliases
+qt_aliases['gui-completion'] = 'ConsoleWidget.gui_completion'
 # add frontend aliases to the full set
-aliases.update(qt_aliases)
+aliases |= qt_aliases
 
 # get flags&aliases into sets, and remove a couple that
 # shouldn't be scrubbed from backend flags:
@@ -166,10 +168,7 @@ class JupyterQtConsoleApp(JupyterApp, JupyterConsoleApp):
     def _plain_changed(self, name, old, new):
         kind = 'plain' if new else 'rich'
         self.config.ConsoleWidget.kind = kind
-        if new:
-            self.widget_factory = JupyterWidget
-        else:
-            self.widget_factory = RichJupyterWidget
+        self.widget_factory = JupyterWidget if new else RichJupyterWidget
 
     # the factory for creating a widget
     widget_factory = Any(RichJupyterWidget)
@@ -339,12 +338,10 @@ class JupyterQtConsoleApp(JupyterApp, JupyterConsoleApp):
             widget.set_default_style(colors=colors)
 
         if self.stylesheet:
-            # we got an explicit stylesheet
-            if os.path.isfile(self.stylesheet):
-                with open(self.stylesheet) as f:
-                    sheet = f.read()
-            else:
+            if not os.path.isfile(self.stylesheet):
                 raise IOError("Stylesheet %r not found." % self.stylesheet)
+            with open(self.stylesheet) as f:
+                sheet = f.read()
         if sheet:
             widget.style_sheet = sheet
             widget._style_sheet_changed()
@@ -426,8 +423,7 @@ class JupyterQtConsoleApp(JupyterApp, JupyterConsoleApp):
             ('IPythonWidget', 'JupyterWidget'),
             ('RichIPythonWidget', 'RichJupyterWidget'),
         ]:
-            cfg = self._deprecate_config(self.config, old_name, new_name)
-            if cfg:
+            if cfg := self._deprecate_config(self.config, old_name, new_name):
                 self.update_config(cfg)
         JupyterConsoleApp.initialize(self,argv)
         self.init_qt_elements()

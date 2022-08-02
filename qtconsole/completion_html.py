@@ -10,13 +10,13 @@ from qtpy import QtCore, QtGui, QtWidgets
 #--------------------------------------------------------------------------
 # Return an HTML table with selected item in a special class
 #--------------------------------------------------------------------------
-def html_tableify(item_matrix, select=None, header=None , footer=None) :
+def html_tableify(item_matrix, select=None, header=None , footer=None):
     """ returnr a string for an html table"""
     if not item_matrix :
         return ''
     html_cols = []
-    tds = lambda text : '<td>'+text+'  </td>'
-    trs = lambda text : '<tr>'+text+'</tr>'
+    tds = lambda text: f'<td>{text}  </td>'
+    trs = lambda text: f'<tr>{text}</tr>'
     tds_items = [list(map(tds, row)) for row in item_matrix]
     if select :
         row, col = select
@@ -27,19 +27,21 @@ def html_tableify(item_matrix, select=None, header=None , footer=None) :
     html_cols = map(trs, (''.join(row) for row in tds_items))
     head = ''
     foot = ''
-    if header :
-        head = ('<tr>'\
-            +''.join(('<td>'+header+'</td>')*len(item_matrix[0]))\
-            +'</tr>')
+    if header:
+        head = (
+            '<tr>' + ''.join(f'<td>{header}</td>' * len(item_matrix[0]))
+        ) + '</tr>'
 
-    if footer :
-        foot = ('<tr>'\
-            +''.join(('<td>'+footer+'</td>')*len(item_matrix[0]))\
-            +'</tr>')
-    html = ('<table class="completion" style="white-space:pre"'
-            'cellspacing=0>' +
-            head + (''.join(html_cols)) + foot + '</table>')
-    return html
+
+    if footer:
+        foot = (
+            '<tr>' + ''.join(f'<td>{footer}</td>' * len(item_matrix[0]))
+        ) + '</tr>'
+
+    return (
+        '<table class="completion" style="white-space:pre"'
+        'cellspacing=0>' + head + (''.join(html_cols)) + foot + '</table>'
+    )
 
 class SlidingInterval(object):
     """a bound interval that follows a cursor
@@ -246,34 +248,24 @@ class CompletionHtml(QtWidgets.QWidget):
         # case 1
         if (row > nr and col >= nc) or (row >= nr and col > nc):
             self._select_index(0, 0)
-        # case 2
         elif (row <= 0 and col < 0) or  (row < 0 and col <= 0):
             self._select_index(nr, nc)
-        # case 3
         elif row > nr :
             self._select_index(0, col+1)
-        # case 4
         elif row < 0 :
             self._select_index(nr, col-1)
-        # case 5
         elif col > nc :
             self._select_index(row+1, 0)
-        # case 6
         elif col < 0 :
             self._select_index(row-1, nc)
-        elif 0 <= row and row <= nr and 0 <= col and col <= nc :
+        else:
             self._index = (row, col)
-        else :
-            raise NotImplementedError("you'r trying to go where no completion\
-                           have gone before : %d:%d (%d:%d)"%(row, col, nr, nc) )
 
 
     @property
     def _slice_end(self):
         end = self._slice_start+self._slice_len
-        if end > len(self._items) :
-            return None
-        return end
+        return None if end > len(self._items) else end
 
     def select_up(self):
         """move cursor up"""
@@ -328,24 +320,17 @@ class CompletionHtml(QtWidgets.QWidget):
     def _update_list(self, hilight=True):
         """ update the list of completion and hilight the currently selected completion """
         self._sliding_interval.current = self._index[0]
-        head = None
         foot = None
-        if self._sliding_interval.start > 0 :
-            head = '...'
-
+        head = '...' if self._sliding_interval.start > 0 else None
         if self._sliding_interval.stop < self._sliding_interval._max:
             foot = '...'
         items_m = self._justified_items[\
-                       self._sliding_interval.start:\
-                       self._sliding_interval.stop+1\
-                                       ]
+                           self._sliding_interval.start:\
+                           self._sliding_interval.stop+1\
+                                           ]
 
         self._console_widget._clear_temporary_buffer()
-        if(hilight):
-            sel = (self._sliding_interval.nth, self._index[1])
-        else :
-            sel = None
-
+        sel = (self._sliding_interval.nth, self._index[1]) if hilight else None
         strng = html_tableify(items_m, select=sel, header=head, footer=foot)
         self._console_widget._fill_temporary_buffer(self._old_cursor, strng, html=True)
 
@@ -358,8 +343,7 @@ class CompletionHtml(QtWidgets.QWidget):
         """
         i = self._index
         item = self._items[i[0]][i[1]]
-        item = item.strip()
-        if item :
+        if item := item.strip():
             self._current_text_cursor().insertText(item)
         self.cancel_completion()
 

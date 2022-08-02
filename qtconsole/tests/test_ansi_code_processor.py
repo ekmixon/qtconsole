@@ -55,7 +55,7 @@ class TestAnsiCodeProcessor(unittest.TestCase):
         """ Do xterm-specific control sequences for colors work?
         """
         string = '\x1b]4;20;rgb:ff/ff/ff\x1b' \
-            '\x1b]4;25;rgbi:1.0/1.0/1.0\x1b'
+                '\x1b]4;25;rgbi:1.0/1.0/1.0\x1b'
         substrings = list(self.processor.split_string(string))
         desired = { 20 : (255, 255, 255),
                     25 : (255, 255, 255) }

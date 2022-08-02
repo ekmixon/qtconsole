@@ -75,11 +75,7 @@ def dark_color(color):
     """Check whether a color is 'dark'.
 
     Currently, this is simply whether the luminance is <50%"""
-    rgb = hex_to_rgb(color)
-    if rgb:
-        return rgb_to_hls(*rgb)[1] < 128
-    else: # default to False
-        return False
+    return rgb_to_hls(*rgb)[1] < 128 if (rgb := hex_to_rgb(color)) else False
 
 def dark_style(stylename):
     """Guess whether the background of the style with name 'stylename'
@@ -91,14 +87,14 @@ def get_colors(stylename):
     from a templatee."""
     style = get_style_by_name(stylename)
     fgcolor = style.style_for_token(Token.Text)['color'] or ''
-    if len(fgcolor) in (3,6):
+    if len(fgcolor) in {3, 6}:
         # could be 'abcdef' or 'ace' hex, which needs '#' prefix
         try:
             int(fgcolor, 16)
         except TypeError:
             pass
         else:
-            fgcolor = "#"+fgcolor
+            fgcolor = f"#{fgcolor}"
 
     return dict(
         bgcolor = style.background_color,
@@ -116,4 +112,4 @@ def sheet_from_template(name, colors='lightbg'):
     elif colors=='nocolor':
         return default_bw_style_sheet
     else:
-        raise KeyError("No such color scheme: %s"%colors)
+        raise KeyError(f"No such color scheme: {colors}")

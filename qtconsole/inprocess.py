@@ -71,8 +71,10 @@ class QtInProcessKernelClient(QtKernelClientMixin, InProcessKernelClient):
     stdin_channel_class = Type(QtInProcessChannel)
     hb_channel_class = Type(QtInProcessHBChannel)
 
+
+
 class QtInProcessKernelManager(QtKernelManagerMixin, InProcessKernelManager):
-    client_class = __module__ + '.QtInProcessKernelClient'
+    client_class = f'{__module__}.QtInProcessKernelClient'
 
 
 class QtInProcessRichJupyterWidget(RichJupyterWidget):
@@ -82,9 +84,6 @@ class QtInProcessRichJupyterWidget(RichJupyterWidget):
     def _is_complete(self, source, interactive=True):
         shell = self.kernel_manager.kernel.shell
         status, indent_spaces = \
-            shell.input_transformer_manager.check_complete(source)
-        if indent_spaces is None:
-            indent = ''
-        else:
-            indent = ' ' * indent_spaces
+                shell.input_transformer_manager.check_complete(source)
+        indent = '' if indent_spaces is None else ' ' * indent_spaces
         return status != 'incomplete', indent

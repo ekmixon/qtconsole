@@ -21,7 +21,7 @@ class MetaQObjectHasTraits(MetaQObject, MetaHasTraits):
     QObject. Using SuperQObject instead of QObject is highly recommended. See
     QtKernelManager for an example.
     """
-    def __new__(mcls, name, bases, classdict):
+    def __new__(cls, name, bases, classdict):
         # FIXME: this duplicates the code from MetaHasTraits.
         # I don't think a super() call will help me here.
         for k,v in iter(classdict.items()):
@@ -32,13 +32,12 @@ class MetaQObjectHasTraits(MetaQObject, MetaHasTraits):
                     vinst = v()
                     vinst.name = k
                     classdict[k] = vinst
-        cls = MetaQObject.__new__(mcls, name, bases, classdict)
-        return cls
+        return MetaQObject.__new__(cls, name, bases, classdict)
 
-    def __init__(mcls, name, bases, classdict):
+    def __init__(self, name, bases, classdict):
         # Note: super() did not work, so we explicitly call these.
-        MetaQObject.__init__(mcls, name, bases, classdict)
-        MetaHasTraits.__init__(mcls, name, bases, classdict)
+        MetaQObject.__init__(self, name, bases, classdict)
+        MetaHasTraits.__init__(self, name, bases, classdict)
 
 #-----------------------------------------------------------------------------
 # Classes
